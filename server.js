@@ -232,7 +232,7 @@ var dialog = new builder.IntentDialog({ recognizers: [recognizer] });
 bot.dialog('/', dialog);
 
 // Agregamos nuestro middleware
-/*
+
 bot.use({
     botbuilder: function (session, next) {
         logMensajeEntrante(session, next);
@@ -240,14 +240,14 @@ bot.use({
     send: function (event, next) {
         logMensajeSaliente(event, next);
     }
-});*/
+});
 
 // Dialogos
-/*bot.dialog('/', [
+bot.dialog('/common', [
     function (session) {
         
 
-        builder.Prompts.text(session, '¿Cómo te llamas?');
+        builder.Prompts.text(session, '¿Cómo te llamas loco?');
 
     },
     function (session, results) {
@@ -263,7 +263,7 @@ bot.use({
   .beginDialogAction('carouselLiveDialogAction', 'liveCTV', { matches: /^live$/i })
   .beginDialogAction('tarjetaDialogAction', 'tarjeta', { matches: /^tarjeta$/i })
   .beginDialogAction('carouselDialogAction', 'cursosOTEC', { matches: /^cursos$/i });
-*/
+
 
 
 
@@ -271,22 +271,17 @@ dialog.matches('PotentialClient',[
     function (session, results, next) {
         if(!session.userData.name){
           fetchRecords();
-            builder.Prompts.text(session, '¿Cómo te llamas?');
+          builder.Prompts.text(session, '¿Cómo te llamas?');
         }else{
             next();
         }
     },
     function (session, results) {
         session.userData.name = results.response;
-      
-        
-
         builder.Prompts.text(session, 'Indicanos tu email por favor');
     },
     function (session, results) {
         session.userData.email = results.response;
-        sendMailToSellers({"email":session.userData.email,"content":session.dialogData});
-
         builder.Prompts.number(session, 'Indicanos tu teléfono de contacto');
     },
     function (session, results) {
@@ -307,26 +302,29 @@ dialog.matches('PotentialClient',[
 
     },
     function (session, results) {
-        session.dialogData.service = results.response.entity;
+        session.userData.service = results.response.entity;
         builder.Prompts.text(session, '¿Tienes cursos online? ¿dónde podemos verlo?');
     },
     function (session, results) {
-        session.dialogData.hasCourses = results.response;
+        session.userData.hasCourses = results.response;
         builder.Prompts.text(session, '¿Cómo planeas usar tu plataforma de educación online?');
     },
     function (session, results) {
-        session.dialogData.planCourses = results.response;
+        session.userData.planCourses = results.response;
         builder.Prompts.number(session, '¿Cúal es su presupuesto?');
     },
     
     function (session, results) {
-        session.dialogData.budget = results.response;
+        session.userData.budget = results.response;
         builder.Prompts.confirm(session, '¿Quieres ver un resumen?');
     },
     function (session, results) {
         if (results.response) {
             console.log(session.userData);
+            console.log(session.dialogData);
             session.endDialog(`Me contaste que... `);
+            sendMailToSellers({"email":session.userData.email,"contentUser":session.userData});
+
         }
         else {
             session.endDialog('Adios!');
@@ -464,15 +462,35 @@ function logMensajeSaliente(event, next) {
     next();
 }
 
+/*
+HOW-TO
+  npm install sendgrid-nodejs
+  echo "export SENDGRID_API_KEY='YOUR_API_KEY'" > sendgrid.env
+  echo "sendgrid.env" >> .gitignore
+  source ./sendgrid.env 
 
+*/
 function sendMailToSellers(data, info){
         var helper = require('sendgrid').mail;
         var fromEmail = new helper.Email(data.email);
         var toEmail = new helper.Email("rodrigo.diaz@classroomtv.com");
         var subject = 'Cotizacion';
-        var dataFromUser = data.content;
-        var content = new helper.Content('text/plain', 'Hola te ha llegado un mensaje desde el Chat '+ dataFromUser);
-        var mail = new helper.Mail(fromEmail, subject, toEmail, content);
+        var dataFromUser = data.contentUser;
+        var contentBody = 'Hola te ha llegado un mensaje desde el Chat, ';
+         contentBody += 'El usuario llamado ' + dataFromUser.name + '\n';
+         contentBody += 'Este prospecto ' + '\n';
+         contentBody += ((dataFromUser.belongsTocompany)? 'Pertenece a la empresa '+dataFromUser.company : 'es persona natural.' ) + '\n';
+         contentBody += 'El servicio al que esta interesado: ' + dataFromUser.service + '\n';
+         contentBody += 'cursos anteriores: ' + dataFromUser.hasCourses+ '\n';
+         contentBody += 'Su contacto es: ' + dataFromUser.phone+ '\n';
+         contentBody += 'Planes asociados: ' + dataFromUser.planCourses+ '\n';
+         contentBody += 'Su presupuesto consta de $ ' + dataFromUser.budget+ '\n';
+         contentBody += 'Favor contactarlo dentro de las proximas 48 horas'+ '\n';
+         contentBody += 'equipo ClassroomTV';
+
+         content = new helper.Content('text/plain', contentBody);
+         mail = new helper.Mail(fromEmail, subject, toEmail, content);
+
 
         var sg = require('sendgrid')(process.env.SENDGRID_API_KEY);
         var request = sg.emptyRequest({
@@ -535,5 +553,5 @@ function fetchRecords(){
         });
 
 
-        db.end();
+        dataBase.end();
 }
