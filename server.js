@@ -333,9 +333,22 @@ dialog.matches('PotentialClient',[
 ]).beginDialogAction('ayudaDialogAction','helpDialog',{matches: /^ayuda$/i });
 
 // Ejemplo: menú
-bot.dialog('preguntarMenu', [
+bot.dialog('/preguntarMenu', [
     function (session) {
-        builder.Prompts.choice(session, 'Estos son los temas que podemos conversar', 'Movil|Streaming|Cursos');
+      //session.endDialog('Estos son los temas que podemos conversar: Cotizacion, Streaming, Cursos, Movil');
+      builder.Prompts.choice(session, 'Estos son los temas que podemos conversar', 'Movil|Streaming|Cursos');
+    },
+    function (session, results){
+      var movil = builder.EntityRecognizer.findAllEntities(args.entities, 'movil');
+      var curso = builder.EntityRecognizer.findAllEntities(args.entities, 'curso');
+      var otec = builder.EntityRecognizer.findAllEntities(args.entities, 'otec');
+      var streaming = builder.EntityRecognizer.findAllEntities(args.entities, 'streaming');
+      var cotizacion = builder.EntityRecognizer.findAllEntities(args.entities, 'cotizacion');
+      console.log(movil);
+      console.log(curso);
+      console.log(otec);
+      console.log(streaming);
+      console.log(cotizacion);
     }
 ]).beginDialogAction('ayudaDialogAction','helpDialog',{matches: /^ayuda$/i });;
 
@@ -469,12 +482,9 @@ function logMensajeSaliente(event, next) {
 
 bot.dialog('helpDialog', [
     function (session) {
-        builder.Prompts.text(session, '¿Necesitas ayuda?, te comentamos que puedes consultar los siguientes item: ');
-    },
-    function (session, results) {
-        
-      session.endDialog('A mí también me interesa este item');
-       
+        //builder.Prompts.text(session, '¿Necesitas ayuda?, te comentamos que puedes consultar los siguientes item: ');
+        session.send('¿Necesitas ayuda?, te comentamos que puedes consultar los siguientes item: ');
+        session.beginDialog('/preguntarMenu');
     }
 ]);
 
@@ -493,13 +503,13 @@ function sendMailToSellers(data, info){
         var toEmail = new helper.Email("rodrigo.diaz@classroomtv.com");
         var subject = 'Cotizacion';
         var dataFromUser = data.contentUser;
-        var contentBody = 'Hola te ha llegado un mensaje desde el Chat, ';
-         contentBody += 'El usuario llamado ' + dataFromUser.name + '\n';
-         contentBody += 'Este prospecto ' + '\n';
-         contentBody += ((dataFromUser.belongsTocompany)? 'Pertenece a la empresa '+dataFromUser.company : 'es persona natural.' ) + '\n';
-         contentBody += 'El servicio al que esta interesado: ' + dataFromUser.service + '\n';
+        var contentBody = 'Hola te ha llegado un mensaje desde el Chat de ClassroomTV. ';
+         contentBody += 'Un cliente llamado ' + dataFromUser.name + '\n';
+         contentBody += ' requiere tu atención. Este prospecto ' + '\n';
+         contentBody += ((dataFromUser.belongsTocompany)? 'pertenece a la empresa '+dataFromUser.company : 'es persona natural.' ) + '\n';
+         contentBody += 'El servicio al que esta interesado es: ' + dataFromUser.service + '\n';
          contentBody += 'cursos anteriores: ' + dataFromUser.hasCourses+ '\n';
-         contentBody += 'Su contacto es: ' + dataFromUser.phone+ '\n';
+         contentBody += 'Su nro. de contacto es: ' + dataFromUser.phone+ '\n';
          contentBody += 'Planes asociados: ' + dataFromUser.planCourses+ '\n';
          contentBody += 'Su presupuesto consta de $ ' + dataFromUser.budget+ '\n';
          contentBody += 'Favor contactarlo dentro de las proximas 48 horas'+ '\n';
