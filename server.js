@@ -182,7 +182,7 @@ cardsStreaming = [
         title:'ClassroomTV Live',
         summary:'ClassroomTV Live',
         description:'¡No te pierdas de nada! Hemos incorporado nuestra versión LIVE, donde tus clases y capacitaciones son en Streaming. Podrás chatear con tus profesores e interactuar con otros usuarios, mientras sigues disfrutando de tu Plataforma de siempre.',
-        image_thumbnail:'',
+        image_thumbnail:'https://www.classroomtv.com/img/pages/live/chat-01.png',
     },
     { 
         title:'ClassroomTV Live',
@@ -270,15 +270,15 @@ bot.dialog('/common', [
 dialog.matches('PotentialClient',[
     function (session, results, next) {
         if(!session.userData.name){
-          fetchRecords();
-          builder.Prompts.text(session, '¿Cómo te llamas?');
+          //fetchRecords();
+          builder.Prompts.text(session, 'Bienvenido a la sección de cotización, para procesar tu solicitud necesitamos respondas algunas preguntas sobre tí. Comencemos, ¿Cómo te llamas?');
         }else{
             next();
         }
     },
     function (session, results) {
         session.userData.name = results.response;
-        builder.Prompts.text(session, 'Indicanos tu email por favor');
+        builder.Prompts.text(session, 'Muy bien `${session.userData.name}`, Indicanos tu email por favor, enviaremos solo un mail y servirá de respaldo de éste proceso');
     },
     function (session, results) {
         session.userData.email = results.response;
@@ -298,12 +298,12 @@ dialog.matches('PotentialClient',[
     },
     function (session, results) {
         session.userData.company = results.response;
-        builder.Prompts.choice(session, '¿Algún servicio interesado?', 'Crear mi propia escuela virtual|Diseñar y construir un curso|Importar o curar un curso existente|Promocion y marketing|Distribución', { listStyle: builder.ListStyle.button });
+        builder.Prompts.choice(session, '¿Algún servicio interesado? Tenemos las siguientes opciones que sirven como orientación', 'Crear mi propia escuela virtual|Construir un curso|Importar un curso existente|Promocion y marketing|Distribución', { listStyle: builder.ListStyle.button });
 
     },
     function (session, results) {
         session.userData.service = results.response.entity;
-        builder.Prompts.text(session, '¿Tienes cursos online? ¿dónde podemos verlo?');
+        builder.Prompts.text(session, '¿Tienes cursos online? ¿dónde podemos verlo? Nos servirá para darte una mejor opción de diseño');
     },
     function (session, results) {
         session.userData.hasCourses = results.response;
@@ -311,7 +311,7 @@ dialog.matches('PotentialClient',[
     },
     function (session, results) {
         session.userData.planCourses = results.response;
-        builder.Prompts.number(session, '¿Cúal es su presupuesto?');
+        builder.Prompts.number(session, '¿Cúal es su presupuesto? Esperamos un monto en pesos chilenos (CLP)');
     },
     
     function (session, results) {
@@ -330,14 +330,14 @@ dialog.matches('PotentialClient',[
             session.endDialog('Adios!');
         }
     }
-]);
+]).beginDialogAction('ayudaDialogAction','helpDialog',{matches: /^ayuda$/i });
 
 // Ejemplo: menú
 bot.dialog('preguntarMenu', [
     function (session) {
         builder.Prompts.choice(session, 'Estos son los temas que podemos conversar', 'Movil|Streaming|Cursos');
     }
-]);
+]).beginDialogAction('ayudaDialogAction','helpDialog',{matches: /^ayuda$/i });;
 
 // Ejemplo: botón
 bot.dialog('preguntarBoton', [
@@ -385,7 +385,7 @@ dialog.matches('ShowCourses', [
                         builder.CardImage.create(session, row.image_thumbnail)
                     ])
                     .buttons([
-                        builder.CardAction.openUrl(session, 'https://docs.botframework.com/en-us/', 'Aprende')
+                        builder.CardAction.openUrl(session, 'https://otec.classroomtv.com', 'Aprende')
                     ]);
                 HeroCards.push(hero);
         });
@@ -394,7 +394,7 @@ dialog.matches('ShowCourses', [
         session.send(msj);
 
     }
-]);
+]).beginDialogAction('ayudaDialogAction','helpDialog',{matches: /^ayuda$/i });;
 
 dialog.matches('ShowMovil',[
     function (session) {
@@ -411,7 +411,7 @@ dialog.matches('ShowMovil',[
                         builder.CardImage.create(session, row.image_thumbnail)
                     ])
                     .buttons([
-                        builder.CardAction.openUrl(session, 'https://docs.botframework.com/en-us/', 'Aprende')
+                        builder.CardAction.openUrl(session, 'https://otec.classroomtv.com', 'Aprende')
                     ]);
                 HeroCards.push(hero);
         });
@@ -420,7 +420,7 @@ dialog.matches('ShowMovil',[
         session.send("Este es el conjunto de tarjetas con información de la App Movil");
         session.send(msj);
     }
-]);
+]).beginDialogAction('ayudaDialogAction','helpDialog',{matches: /^ayuda$/i });;
 
 dialog.matches('ShowLive',[
     function (session) {
@@ -437,7 +437,7 @@ dialog.matches('ShowLive',[
                         builder.CardImage.create(session, row.image_thumbnail)
                     ])
                     .buttons([
-                        builder.CardAction.openUrl(session, 'https://docs.botframework.com/en-us/', 'Aprende')
+                        builder.CardAction.openUrl(session, 'https://otec.classroomtv.com', 'Aprende')
                     ]);
                 HeroCards.push(hero);
         });
@@ -445,11 +445,16 @@ dialog.matches('ShowLive',[
         session.send("Este es el conjunto de tarjetas con información del servicio de Streaming");
         session.send(msj);
     }
-]);
+]).beginDialogAction('ayudaDialogAction','helpDialog',{matches: /^ayuda$/i });;
 
 //Este es el Default, cuando LUIS no entendió la consulta.
 dialog.onDefault(builder.DialogAction.send("No entendí. Me lo decís de nuevo pero de otra manera, por favor?"));
 
+bot.dialog('/Cancelar', [
+    function (session) {
+        session.endDialog('No hay problema. Cancelamos el proceso de cotización.')
+    }
+]).triggerAction({ matches: /^cancelar$/i });
 
 // Esta es la lógica de ejecución del middlware
 function logMensajeEntrante(session, next) {
@@ -461,6 +466,18 @@ function logMensajeSaliente(event, next) {
     console.log(event.text);
     next();
 }
+
+bot.dialog('helpDialog', [
+    function (session) {
+        builder.Prompts.text(session, '¿Necesitas ayuda?, te comentamos que puedes consultar los siguientes item: ');
+    },
+    function (session, results) {
+        
+      session.endDialog('A mí también me interesa este item');
+       
+    }
+]);
+
 
 /*
 HOW-TO
